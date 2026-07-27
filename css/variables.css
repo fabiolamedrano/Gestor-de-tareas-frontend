@@ -1,0 +1,71 @@
+/* ===== TEMAS ===== */
+:root,
+[data-theme="dark"] {
+  --bg:           #2C2C2C;
+  --surface:      #3A3A3A;
+  --surface-2:    #444444;
+  --border:       #505050;
+  --border-2:     #606060;
+  --text:         #E8E8E8;
+  --text-muted:   #9A9A9A;
+  --text-faint:   #666666;
+  --accent:       #5BA3E8;
+  --accent-2:     #7BB8F0;
+  --accent-grad:  linear-gradient(135deg, #4A90D9, #5BA3E8);
+  --accent-soft:  rgba(91,163,232,0.12);
+  --accent-soft2: rgba(91,163,232,0.22);
+  --danger:       #f87171;
+  --success:      #34d399;
+  --avatar-grad:  linear-gradient(135deg, #4A90D9, #7BB8F0);
+  --shadow:       0 8px 32px rgba(0,0,0,0.4);
+  --shadow-modal: 0 30px 70px rgba(0,0,0,0.6);
+}
+
+[data-theme="light"] {
+  --bg:           #F0EBF8;
+  --surface:      #FFFFFF;
+  --surface-2:    #EAE3F5;
+  --border:       #DDD5EE;
+  --border-2:     #CCC2E0;
+  --text:         #3D2C5E;
+  --text-muted:   #7B6A9E;
+  --text-faint:   #B8A8D8;
+  --accent:       #9B7AC7;
+  --accent-2:     #7D5BAF;
+  --accent-grad:  linear-gradient(135deg, #7D5BAF, #9B7AC7);
+  --accent-soft:  rgba(155,122,199,0.10);
+  --accent-soft2: rgba(155,122,199,0.22);
+  --danger:       #c0567a;
+  --success:      #4caf8a;
+  --avatar-grad:  linear-gradient(135deg, #9B7AC7, #C4A8E8);
+  --shadow:       0 4px 20px rgba(61,44,94,0.10);
+  --shadow-modal: 0 20px 60px rgba(61,44,94,0.18);
+}
+
+/* ===== RESET Y GLOBALES ===== */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s, color 0.3s;
+}
+button { cursor: pointer; background: transparent; border: none; color: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* ===== EMPTY STATE (compartido) ===== */
+.empty-state {
+  padding: 14px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  border: 1px dashed var(--border-2);
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+/* ===== BADGES DE PRIORIDAD (compartido) ===== */
+.badge-alta   { background: rgba(248,113,113,0.15); color: #f87171; }
+.badge-media  { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+.badge-baja   { background: rgba(52,211,153,0.15);  color: #34d399; }

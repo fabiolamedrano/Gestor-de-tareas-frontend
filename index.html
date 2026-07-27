@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestor de tareas</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">Gestor de tareas</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <h4>Proyectos</h4>
+        <div id="priorityList"></div>
+        <h4>Etiquetas</h4>
+        <div id="tagList"></div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="userMenuBtn" class="user-btn">
+          <span class="avatar" id="userAvatar">TU</span>
+          <span id="userEmail">Tu cuenta</span>
+          <span class="arrow">▼</span>
+        </button>
+        
+        <div class="user-dropdown" id="userMenuDropdown" style="display:none;">
+          <!-- Botones principales con clase exclusiva -->
+          <button class="menu-btn">Configuración</button>
+          <button class="menu-btn">Notificaciones</button>
+          
+          <!-- Selector de Temas -->
+          <div class="theme-option">
+            <span>Tema</span>
+            <div class="theme-buttons">
+              <button class="theme-btn active" data-theme="dark" title="Oscuro"></button>
+              <button class="theme-btn" data-theme="light" title="Claro"></button>
+            </div>
+          </div>
+          
+          <button class="menu-btn danger">→ Cerrar sesión</button>
+        </div> <!-- ¡Esta era la etiqueta que faltaba cerrar aquí! -->
+      </div>
+    </aside>
+
+    <!-- Backdrop móvil -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+    <!-- Main -->
+    <main class="main-area">
+      <header class="header-area">
+        <button id="hamburgerBtn" class="hamburger-btn">☰</button>
+        <div class="header-top">
+          <div class="header-title">
+            <span id="priorityDot" class="priority-dot"></span>
+            <h1 id="pageTitle">Todas las tareas</h1>
+          </div>
+          <p class="header-subtitle" id="taskCounter">Cargando…</p>
+        </div>
+        <div class="header-actions">
+          <div class="search-wrapper">
+            <input id="searchInput" class="search-input" placeholder="Buscar tarea…" />
+          </div>
+          <button id="newTaskBtn" class="btn-primary">+ Nueva tarea</button>
+        </div>
+      </header>
+
+      <section class="stats-grid" id="statsGrid"></section>
+      <div class="tabs-bar" id="tabsBar"></div>
+      <div id="contentArea" class="task-list"></div>
+    </main>
+
+    <!-- Right Panel -->
+    <aside class="right-panel">
+      <h4>Actividad Reciente</h4>
+      <div id="activityList"></div>
+      <h4>Por Prioridad</h4>
+      <div id="priorityChart"></div>
+    </aside>
+  </div>
+
+  <div id="modalContainer"></div>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/tasks.js"></script>
+  <script src="/js/tags.js"></script>
+  <script src="/js/subtasks.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,4 +1,3 @@
-/* ===== MODALES ===== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -71,7 +70,7 @@
 }
 .modal-body p { margin: 0; font-size: 13px; color: var(--text-muted); }
 
-/* ===== SUBTAREAS (dentro del modal) ===== */
+/* SUBTAREAS (dentro del modal)*/
 .subtask-item {
   display: flex;
   align-items: center;
@@ -170,7 +169,7 @@
   cursor: pointer;
 }
 
-/* ===== MODAL NUEVA TAREA ===== */
+/* MODAL NUEVA TAREA */
 .new-task-modal .modal-box { width: 440px; padding: 28px; }
 .new-task-modal h2 { margin: 0 0 20px; font-size: 18px; font-weight: 700; color: var(--text); }
 .new-task-modal label {

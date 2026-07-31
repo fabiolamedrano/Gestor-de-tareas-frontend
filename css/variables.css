@@ -1,4 +1,4 @@
-/* ===== TEMAS ===== */
+/* TEMAS */
 :root,
 [data-theme="dark"] {
   --bg:           #2C2C2C;
@@ -54,7 +54,7 @@ body {
 button { cursor: pointer; background: transparent; border: none; color: inherit; }
 input, textarea, select { font-family: inherit; }
 
-/* ===== EMPTY STATE (compartido) ===== */
+/* EMPTY STATE (compartido) */
 .empty-state {
   padding: 14px;
   background: var(--surface-2);
@@ -65,7 +65,7 @@ input, textarea, select { font-family: inherit; }
   font-size: 12px;
 }
 
-/* ===== BADGES DE PRIORIDAD (compartido) ===== */
+/* BADGES DE PRIORIDAD (compartido) */
 .badge-alta   { background: rgba(248,113,113,0.15); color: #f87171; }
 .badge-media  { background: rgba(251,191,36,0.15);  color: #fbbf24; }
 .badge-baja   { background: rgba(52,211,153,0.15);  color: #34d399; }

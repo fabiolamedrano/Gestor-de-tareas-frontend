@@ -1,5 +1,4 @@
-// js/tasks.js
-const API_BASE = window.auth?.API_BASE || 'http://localhost:8000';
+const TASKS_API_BASE = window.auth?.API_BASE || 'http://localhost:8000';
 
 function getHeaders() {
     const token = localStorage.getItem('token') || 'fake-token';
@@ -9,7 +8,7 @@ function getHeaders() {
     };
 }
 
-// ---- Convertir tarea del backend al formato de la UI ----
+// Convertir tarea del backend al formato de la UI 
 function fromBackend(task) {
     return {
         id: task.id,
@@ -31,7 +30,7 @@ function fromBackend(task) {
     };
 }
 
-// ---- Convertir tarea de la UI al formato del backend ----
+// Convertir tarea de la UI al formato del backend
 function toBackend(task, includeId = false) {
     const data = {
         title: task.title,
@@ -45,10 +44,10 @@ function toBackend(task, includeId = false) {
     return data;
 }
 
-// ---- API Calls ----
+// API Calls 
 async function getTasks() {
     try {
-        const response = await fetch(`${API_BASE}/tasks/`, { headers: getHeaders() });
+        const response = await fetch(`${TASKS_API_BASE}/tasks/`, { headers: getHeaders() });
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.detail || 'Error al obtener tareas');
@@ -62,7 +61,7 @@ async function getTasks() {
 }
 
 async function getTaskById(id) {
-    const response = await fetch(`${API_BASE}/tasks/${id}`, { headers: getHeaders() });
+    const response = await fetch(`${TASKS_API_BASE}/tasks/${id}`, { headers: getHeaders() });
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Error al obtener tarea');
@@ -73,7 +72,7 @@ async function getTaskById(id) {
 
 async function createTask(taskData) {
     const body = toBackend(taskData);
-    const response = await fetch(`${API_BASE}/tasks/`, {
+    const response = await fetch(`${TASKS_API_BASE}/tasks/`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(body)
@@ -88,7 +87,7 @@ async function createTask(taskData) {
 
 async function updateTask(taskData) {
     const body = toBackend(taskData, true);
-    const response = await fetch(`${API_BASE}/tasks/`, {
+    const response = await fetch(`${TASKS_API_BASE}/tasks/`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(body)
@@ -102,7 +101,7 @@ async function updateTask(taskData) {
 }
 
 async function deleteTask(id) {
-    const response = await fetch(`${API_BASE}/tasks/${id}`, {
+    const response = await fetch(`${TASKS_API_BASE}/tasks/${id}`, {
         method: 'DELETE',
         headers: getHeaders()
     });
@@ -119,17 +118,15 @@ async function toggleTaskComplete(id) {
     return updateTask(task);
 }
 
-// ---- Obtener etiquetas ----
+// Obtener etiquetas
 async function getTags() {
     try {
-        // Intenta obtener desde tu endpoint de tags si existe
-        const response = await fetch(`${API_BASE}/tags/`, { headers: getHeaders() });
+        const response = await fetch(`${TASKS_API_BASE}/tags/`, { headers: getHeaders() });
         if (response.ok) {
             const data = await response.json();
             return data;
         }
     } catch (e) {
-        // Si no hay endpoint, extrae de las tareas
         const tasks = await getTasks();
         const tagSet = new Set();
         tasks.forEach(t => {

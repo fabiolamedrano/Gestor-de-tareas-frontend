@@ -1,35 +1,25 @@
-import { getTasks, createTask, updateTask, getTaskById, toggleTaskComplete, deleteTask } from './tasks.js';
+import { getTasks, createTask, updateTask, getTaskById, toggleTaskComplete, deleteTask, getTags } from './tasks.js';
 import { renderTags } from './tags.js';
 import { renderSubtasks } from './subtasks.js';
 
 // ==========================================
-// 1. PROTECCIÓN DE RUTA (Al inicio de app.js)
+// PROTECCIÓN DE RUTA
 // ==========================================
-if (localStorage.getItem('isLoggedIn') !== 'true') {
-    // Entra a la carpeta pages/ para buscar login.html
+if (!localStorage.getItem('token')) {
     window.location.href = 'pages/login.html';
 }
 
 // ==========================================
-// 2. LOGOUT / CIERRE DE SESIÓN (Dentro de bindEvents)
+// ESTADO DE LA APLICACIÓN
 // ==========================================
-const logoutBtn = document.getElementById('logoutBtn') || document.querySelector('.user-dropdown .danger');
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        
-        // Limpiar sesión
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('user_email');
-        
-        // Redirigir a pages/login.html
-        window.location.href = 'pages/login.html';
-    });
-}
+let tasks = [];
+let currentFilter = 'all';
+let searchQuery = '';
+let selectedPriority = null;
+let selectedTag = null;
 
 // ==========================================
-// 2. INICIALIZACIÓN
+// INICIALIZACIÓN
 // ==========================================
 async function initApp() {
     // Cargar tema guardado
@@ -41,7 +31,7 @@ async function initApp() {
     });
 
     // Cargar datos de usuario del localStorage
-    const email = localStorage.getItem('userEmail') || localStorage.getItem('user_email') || 'Usuario';
+    const email = localStorage.getItem('user_email') || 'Usuario';
     
 
     const avatar = document.getElementById('userAvatar');
@@ -476,6 +466,7 @@ function openEditTaskModal(task, onSaved) {
                 <div class="field-group">
                     <label>Etiquetas (separadas por comas)</label>
                     <input type="text" id="editTaskTags" value="${escapeHtml(currentTagNames)}" placeholder="ej. trabajo, personal" />
+                    <div class="tag-suggestions" id="editTaskTagSuggestions"></div>
                 </div>
                 <div class="actions">
                     <button class="cancel-btn" data-action="close-modal">Cancelar</button>
@@ -486,6 +477,11 @@ function openEditTaskModal(task, onSaved) {
     `;
 
     document.getElementById('modalContainer').appendChild(overlay);
+
+    renderTagSuggestions(
+        overlay.querySelector('#editTaskTagSuggestions'),
+        overlay.querySelector('#editTaskTags')
+    );
 
     overlay.querySelectorAll('[data-action="close-modal"]').forEach(el => {
         el.addEventListener('click', () => overlay.remove());
@@ -525,6 +521,41 @@ function openEditTaskModal(task, onSaved) {
     });
 }
 
+// ===== SUGERENCIAS DE ETIQUETAS EXISTENTES =====
+async function renderTagSuggestions(container, inputEl) {
+    try {
+        const existingTags = await getTags();
+        if (!existingTags || existingTags.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        const selected = inputEl.value.split(',').map(s => s.trim()).filter(Boolean);
+
+        container.innerHTML = existingTags.map(t => {
+            const name = typeof t === 'string' ? t : (t.name || t.TagName);
+            const active = selected.includes(name) ? 'active' : '';
+            return `<button type="button" class="tag-suggestion-chip ${active}" data-name="${escapeHtml(name)}">#${escapeHtml(name)}</button>`;
+        }).join('');
+
+        container.querySelectorAll('.tag-suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const name = chip.dataset.name;
+                const current = inputEl.value.split(',').map(s => s.trim()).filter(Boolean);
+                if (current.includes(name)) {
+                    inputEl.value = current.filter(n => n !== name).join(', ');
+                    chip.classList.remove('active');
+                } else {
+                    current.push(name);
+                    inputEl.value = current.join(', ');
+                    chip.classList.add('active');
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error al cargar sugerencias de etiquetas:', error);
+    }
+}
+
 // MODAL NUEVA TAREA
 function openNewTaskModal() {
     const overlay = document.createElement('div');
@@ -558,6 +589,7 @@ function openNewTaskModal() {
                 <div class="field-group">
                     <label>Etiquetas (separadas por comas)</label>
                     <input type="text" id="newTaskTags" placeholder="ej. trabajo, personal" />
+                    <div class="tag-suggestions" id="newTaskTagSuggestions"></div>
                 </div>
                 <div class="actions">
                     <button class="cancel-btn" data-action="close-modal">Cancelar</button>
@@ -568,6 +600,11 @@ function openNewTaskModal() {
     `;
 
     document.getElementById('modalContainer').appendChild(overlay);
+
+    renderTagSuggestions(
+        overlay.querySelector('#newTaskTagSuggestions'),
+        overlay.querySelector('#newTaskTags')
+    );
 
     overlay.querySelectorAll('[data-action="close-modal"]').forEach(el => {
         el.addEventListener('click', () => overlay.remove());
@@ -665,11 +702,10 @@ function bindEvents() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('userEmail');
-            localStorage.removeItem('user_email');
             localStorage.removeItem('token');
-            window.location.href = 'login.html';
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('user_email');
+            window.location.href = 'pages/login.html';
         });
     }
 }

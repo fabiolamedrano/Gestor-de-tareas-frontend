@@ -31,7 +31,8 @@ function toBackend(task, includeId = false) {
         priority: task.priority || 'media',
         status: task.completed ? 'completada' : 'pendiente',
         due_date: task.dueDate || null,
-        progress: task.progress || 0
+        progress: task.progress || 0,
+        tag_names: task.tagNames || []
     };
     if (includeId && task.id) data.id = task.id;
     return data;

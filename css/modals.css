@@ -1,3 +1,4 @@
+/* ===== MODALES ===== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -70,7 +71,7 @@
 }
 .modal-body p { margin: 0; font-size: 13px; color: var(--text-muted); }
 
-/* SUBTAREAS (dentro del modal)*/
+/* ===== SUBTAREAS (dentro del modal) ===== */
 .subtask-item {
   display: flex;
   align-items: center;
@@ -169,7 +170,7 @@
   cursor: pointer;
 }
 
-/* MODAL NUEVA TAREA */
+/* ===== MODAL NUEVA TAREA ===== */
 .new-task-modal .modal-box { width: 440px; padding: 28px; }
 .new-task-modal h2 { margin: 0 0 20px; font-size: 18px; font-weight: 700; color: var(--text); }
 .new-task-modal label {
@@ -197,6 +198,31 @@
 .new-task-modal textarea { resize: none; }
 .new-task-modal .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
 .new-task-modal .field-group { margin-bottom: 14px; }
+
+/* ===== SUGERENCIAS DE ETIQUETAS ===== */
+.tag-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.tag-suggestion-chip {
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-2);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.tag-suggestion-chip:hover { border-color: var(--accent); }
+.tag-suggestion-chip.active {
+  background: var(--accent-soft2);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
 .new-task-modal .actions { display: flex; gap: 10px; justify-content: flex-end; }
 .new-task-modal .cancel-btn {
   padding: 9px 18px;

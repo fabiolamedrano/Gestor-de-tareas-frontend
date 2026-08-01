@@ -1,14 +1,7 @@
-const TASKS_API_BASE = window.auth?.API_BASE || 'http://localhost:8000';
+// js/tasks.js
+import { API_BASE, getHeaders } from './auth.js';
 
-function getHeaders() {
-    const token = localStorage.getItem('token') || 'fake-token';
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-    };
-}
-
-// Convertir tarea del backend al formato de la UI 
+// Convertir tarea del backend al formato de la UI
 function fromBackend(task) {
     return {
         id: task.id,
@@ -44,10 +37,10 @@ function toBackend(task, includeId = false) {
     return data;
 }
 
-// API Calls 
-async function getTasks() {
+// ---- API Calls ----
+export async function getTasks() {
     try {
-        const response = await fetch(`${TASKS_API_BASE}/tasks/`, { headers: getHeaders() });
+        const response = await fetch(`${API_BASE}/tasks/`, { headers: getHeaders() });
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.detail || 'Error al obtener tareas');
@@ -56,12 +49,12 @@ async function getTasks() {
         return data.map(fromBackend);
     } catch (error) {
         console.error('Error en getTasks:', error);
-        return []; // Devuelve array vacío en caso de error
+        return [];
     }
 }
 
-async function getTaskById(id) {
-    const response = await fetch(`${TASKS_API_BASE}/tasks/${id}`, { headers: getHeaders() });
+export async function getTaskById(id) {
+    const response = await fetch(`${API_BASE}/tasks/${id}`, { headers: getHeaders() });
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Error al obtener tarea');
@@ -70,9 +63,9 @@ async function getTaskById(id) {
     return fromBackend(data);
 }
 
-async function createTask(taskData) {
+export async function createTask(taskData) {
     const body = toBackend(taskData);
-    const response = await fetch(`${TASKS_API_BASE}/tasks/`, {
+    const response = await fetch(`${API_BASE}/tasks/`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(body)
@@ -85,9 +78,9 @@ async function createTask(taskData) {
     return fromBackend(data);
 }
 
-async function updateTask(taskData) {
+export async function updateTask(taskData) {
     const body = toBackend(taskData, true);
-    const response = await fetch(`${TASKS_API_BASE}/tasks/`, {
+    const response = await fetch(`${API_BASE}/tasks/`, {
         method: 'PUT',
         headers: getHeaders(),
         body: JSON.stringify(body)
@@ -100,8 +93,8 @@ async function updateTask(taskData) {
     return fromBackend(data);
 }
 
-async function deleteTask(id) {
-    const response = await fetch(`${TASKS_API_BASE}/tasks/${id}`, {
+export async function deleteTask(id) {
+    const response = await fetch(`${API_BASE}/tasks/${id}`, {
         method: 'DELETE',
         headers: getHeaders()
     });
@@ -112,16 +105,17 @@ async function deleteTask(id) {
     return true;
 }
 
-async function toggleTaskComplete(id) {
+export async function toggleTaskComplete(id) {
     const task = await getTaskById(id);
     task.completed = !task.completed;
     return updateTask(task);
 }
 
-// Obtener etiquetas
-async function getTags() {
+// ---- Obtener etiquetas ----
+export async function getTags() {
+    const userId = localStorage.getItem('user_id');
     try {
-        const response = await fetch(`${TASKS_API_BASE}/tags/`, { headers: getHeaders() });
+        const response = await fetch(`${API_BASE}/tags/user/${userId}`, { headers: getHeaders() });
         if (response.ok) {
             const data = await response.json();
             return data;
@@ -138,13 +132,3 @@ async function getTags() {
         return Array.from(tagSet).map(name => ({ name }));
     }
 }
-
-window.tasksAPI = {
-    getTasks,
-    getTaskById,
-    createTask,
-    updateTask,
-    deleteTask,
-    toggleTaskComplete,
-    getTags
-};

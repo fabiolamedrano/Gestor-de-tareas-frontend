@@ -2,34 +2,54 @@ import { getTasks, createTask, updateTask, getTaskById, toggleTaskComplete, dele
 import { renderTags } from './tags.js';
 import { renderSubtasks } from './subtasks.js';
 
-let tasks = [];
-let currentFilter = 'all';
-let searchQuery = '';
-let selectedPriority = null;
-let selectedTag = null;
+// ==========================================
+// 1. PROTECCIÓN DE RUTA (Al inicio de app.js)
+// ==========================================
+if (localStorage.getItem('isLoggedIn') !== 'true') {
+    // Entra a la carpeta pages/ para buscar login.html
+    window.location.href = 'pages/login.html';
+}
 
-// INICIALIZACIÓN
+// ==========================================
+// 2. LOGOUT / CIERRE DE SESIÓN (Dentro de bindEvents)
+// ==========================================
+const logoutBtn = document.getElementById('logoutBtn') || document.querySelector('.user-dropdown .danger');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Limpiar sesión
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('user_email');
+        
+        // Redirigir a pages/login.html
+        window.location.href = 'pages/login.html';
+    });
+}
+
+// ==========================================
+// 2. INICIALIZACIÓN
+// ==========================================
 async function initApp() {
     // Cargar tema guardado
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
+    
     document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.theme === savedTheme);
     });
 
-    // Token de prueba (si no hay) (esto solo mientras no haya login)
-    if (!localStorage.getItem('token')) {
-        localStorage.setItem('token', 'demo-token');
-        localStorage.setItem('user_email', 'demo@ejemplo.com');
-    }
+    // Cargar datos de usuario del localStorage
+    const email = localStorage.getItem('userEmail') || localStorage.getItem('user_email') || 'Usuario';
+    
 
-    // Usuario en sidebar
-    const email = localStorage.getItem('user_email') || '';
     const avatar = document.getElementById('userAvatar');
     const emailEl = document.getElementById('userEmail');
-    if (email && avatar && emailEl) {
+    
+    if (emailEl) emailEl.textContent = email;
+    if (avatar && email) {
         avatar.textContent = email.slice(0, 2).toUpperCase();
-        emailEl.textContent = email;
     }
 
     // Cargar tareas y renderizar
@@ -38,7 +58,6 @@ async function initApp() {
     bindEvents();
     renderTags(selectedTag, onTagClick);
 }
-
 // CARGAR TAREAS
 async function loadTasks() {
     try {
@@ -323,7 +342,7 @@ function renderPriorityChart() {
     `;
 }
 
-// MODAL DETALLE
+// MODAL DETALLE DE TAREA
 function openTaskDetail(taskId) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -373,19 +392,6 @@ function openTaskDetail(taskId) {
             });
         }
         metaContainer.innerHTML = metaHtml;
-
-        const subtaskCount = currentTask.subtasks ? currentTask.subtasks.length : 0;
-        const doneCount = currentTask.subtasks ? currentTask.subtasks.filter(s => s.done).length : 0;
-        const progressPct = subtaskCount > 0 ? Math.round((doneCount / subtaskCount) * 100) : 0;
-        const progressContainer = overlay.querySelector('#modalProgressContainer');
-        if (progressContainer) {
-            progressContainer.innerHTML = subtaskCount > 0 ? `
-                <div class="progress-wrap">
-                    <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%"></div></div>
-                    <span class="progress-label">${doneCount}/${subtaskCount} · ${progressPct}%</span>
-                </div>
-            ` : '';
-        }
 
         const subContainer = overlay.querySelector('.subtask-list-container');
         if (subContainer) {
@@ -634,8 +640,8 @@ function bindEvents() {
     }
 
     // Menú de usuario
-    const userMenuBtn = document.getElementById('userMenuBtn');
-    const userMenuDropdown = document.getElementById('userMenuDropdown');
+    const userMenuBtn = document.getElementById('userMenuBtn') || document.getElementById('userAvatar')?.parentElement;
+    const userMenuDropdown = document.getElementById('userMenuDropdown') || document.querySelector('.user-dropdown');
     const arrowEl = userMenuBtn?.querySelector('.arrow');
 
     if (userMenuBtn && userMenuDropdown) {
@@ -654,43 +660,18 @@ function bindEvents() {
         });
     }
 
-    // Botones de tema
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const theme = btn.dataset.theme;
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            if (userMenuDropdown) {
-                userMenuDropdown.style.display = 'none';
-                if (arrowEl) arrowEl.classList.remove('open');
-            }
-        });
-    });
-
-    // Logout
-    const logoutBtn = document.querySelector('.user-dropdown .danger');
+    // Cierre de sesión (Logout)
+    const logoutBtn = document.getElementById('logoutBtn') || document.querySelector('.user-dropdown .danger');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('token');
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userEmail');
             localStorage.removeItem('user_email');
-            localStorage.removeItem('user_id');
-            location.reload();
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
         });
     }
-
-    // Configuración y Notificaciones
-    document.querySelectorAll('.user-dropdown .menu-btn:not(.danger)').forEach(btn => {
-        btn.addEventListener('click', () => {
-            alert(`Has hecho clic en "${btn.textContent.trim()}"`);
-            if (userMenuDropdown) {
-                userMenuDropdown.style.display = 'none';
-                if (arrowEl) arrowEl.classList.remove('open');
-            }
-        });
-    });
 }
 
 // UTILIDADES

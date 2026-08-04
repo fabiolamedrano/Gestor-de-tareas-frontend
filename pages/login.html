@@ -4,14 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Gestor de Tareas</title>
-    <!-- Hojas de estilo saliendo a la raíz (../) -->
+
+    <!-- Aplica el tema guardado antes de pintar, para evitar parpadeo -->
+    <script>
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+    </script>
+
     <link rel="stylesheet" href="../css/styles.css">
-    <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/login-styles.css">
 </head>
 <body class="login-page">
 
     <div class="login-container">
+        <div class="login-theme-switcher">
+            <button class="theme-btn" data-theme="dark" title="Oscuro"></button>
+            <button class="theme-btn" data-theme="light" title="Claro"></button>
+        </div>
+
         <div class="login-card">
             <div class="login-header">
                 <h2>¡Hola de nuevo! 👋</h2>
@@ -23,46 +32,51 @@
             <form id="loginForm" class="login-form">
                 <div class="form-group">
                     <label for="email">Correo electrónico</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        name="email" 
-                        placeholder="tu@correo.com" 
-                        required 
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="tu@correo.com"
+                        required
                         autocomplete="email"
                     >
                 </div>
 
                 <div class="form-group">
                     <label for="password">Contraseña</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        placeholder="••••••••" 
-                        required 
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="••••••••"
+                        required
                         autocomplete="current-password"
                     >
-                </div>
-
-                <div class="form-options">
-                    <label class="remember-me">
-                        <input type="checkbox" id="remember">
-                        <span>Recordarme</span>
-                    </label>
-                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
                 </div>
 
                 <button type="submit" class="btn-primary btn-block">Iniciar Sesión</button>
             </form>
 
             <div class="login-footer">
-                <p>¿No tienes una cuenta? <a href="#">Regístrate aquí</a></p>
+                <p>¿No tienes una cuenta? <a href="register.html">Regístrate aquí</a></p>
             </div>
         </div>
     </div>
 
-    <!-- Vinculación del script login.js desde la carpeta /js -->
     <script type="module" src="../js/login.js"></script>
+    <script>
+        document.querySelectorAll('.login-theme-switcher .theme-btn').forEach(btn => {
+            const saved = localStorage.getItem('theme') || 'dark';
+            if (btn.dataset.theme === saved) btn.classList.add('active');
+
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.theme;
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                document.querySelectorAll('.login-theme-switcher .theme-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    </script>
 </body>
 </html>

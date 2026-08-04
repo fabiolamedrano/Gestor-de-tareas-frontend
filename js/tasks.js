@@ -1,5 +1,13 @@
-// js/tasks.js
 import { API_BASE, getHeaders } from './auth.js';
+
+function formatApiError(error, fallback) {
+    if (!error || !error.detail) return fallback;
+    if (typeof error.detail === 'string') return error.detail;
+    if (Array.isArray(error.detail)) {
+        return error.detail.map(e => `${e.loc?.[e.loc.length - 1] || 'campo'}: ${e.msg}`).join(' | ');
+    }
+    return fallback;
+}
 
 // Convertir tarea del backend al formato de la UI
 function fromBackend(task) {
@@ -34,17 +42,22 @@ function toBackend(task, includeId = false) {
         progress: task.progress || 0,
         tag_names: task.tagNames || []
     };
-    if (includeId && task.id) data.id = task.id;
+    if (includeId && task.id) {
+        data.id = task.id;
+    } else {
+        // Solo se manda en creación (el backend lo requiere para saber de quién es la tarea)
+        data.user_id = Number(localStorage.getItem('user_id'));
+    }
     return data;
 }
 
-// ---- API Calls ----
+// API Calls
 export async function getTasks() {
     try {
         const response = await fetch(`${API_BASE}/tasks/`, { headers: getHeaders() });
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.detail || 'Error al obtener tareas');
+            throw new Error(formatApiError(error, 'Error al obtener tareas'));
         }
         const data = await response.json();
         return data.map(fromBackend);
@@ -58,7 +71,7 @@ export async function getTaskById(id) {
     const response = await fetch(`${API_BASE}/tasks/${id}`, { headers: getHeaders() });
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Error al obtener tarea');
+        throw new Error(formatApiError(error, 'Error al obtener tarea'));
     }
     const data = await response.json();
     return fromBackend(data);
@@ -73,7 +86,7 @@ export async function createTask(taskData) {
     });
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Error al crear tarea');
+        throw new Error(formatApiError(error, 'Error al crear tarea'));
     }
     const data = await response.json();
     return fromBackend(data);
@@ -88,7 +101,7 @@ export async function updateTask(taskData) {
     });
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Error al actualizar tarea');
+        throw new Error(formatApiError(error, 'Error al actualizar tarea'));
     }
     const data = await response.json();
     return fromBackend(data);
@@ -101,7 +114,7 @@ export async function deleteTask(id) {
     });
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Error al eliminar tarea');
+        throw new Error(formatApiError(error, 'Error al eliminar tarea'));
     }
     return true;
 }
@@ -112,7 +125,19 @@ export async function toggleTaskComplete(id) {
     return updateTask(task);
 }
 
-// ---- Obtener etiquetas ----
+export async function deleteTag(id) {
+    const response = await fetch(`${API_BASE}/tags/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(formatApiError(error, 'Error al eliminar etiqueta'));
+    }
+    return true;
+}
+
+// Obtener etiquetas
 export async function getTags() {
     const userId = localStorage.getItem('user_id');
     try {

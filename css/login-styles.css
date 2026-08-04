@@ -1,42 +1,49 @@
-:root {
-  --bg-color: #1a1d21;
-  --card-bg: #22262c;
-  --text-main: #f0f0f0;
-  --text-muted: #8a94a6;
-  --primary-blue: #3b82f6;
-  --primary-hover: #2563eb;
-  --error-red: #ef4444;
-  --border-color: #2d3239;
-}
+/* login-styles.css — usa las variables del sistema de temas (variables.css) */
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-body {
-  background-color: var(--bg-color);
-  color: var(--text-main);
+body.login-page {
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
 }
 
 .login-container {
   width: 100%;
   max-width: 400px;
   padding: 1.5rem;
+  position: relative;
+}
+
+/* Selector de tema, arriba a la derecha */
+.login-theme-switcher {
+  position: absolute;
+  top: 0;
+  right: 1.5rem;
+  display: flex;
+  gap: 6px;
+}
+.login-theme-switcher .theme-btn {
+  width: 20px;
+  height: 20px;
 }
 
 .login-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
   padding: 2.5rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-modal);
+  margin-top: 2.5rem;
 }
 
 .login-header {
@@ -47,6 +54,7 @@ body {
 .login-header h2 {
   font-size: 1.6rem;
   margin-bottom: 0.5rem;
+  color: var(--text);
 }
 
 .login-header p {
@@ -67,45 +75,52 @@ body {
 }
 
 .form-group input {
-  background-color: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   padding: 0.75rem 1rem;
-  color: var(--text-main);
+  color: var(--text);
   font-size: 0.95rem;
   outline: none;
   transition: border-color 0.2s;
+  font-family: inherit;
 }
 
 .form-group input:focus {
-  border-color: var(--primary-blue);
+  border-color: var(--accent);
 }
 
-.btn-login {
+.btn-block {
+  margin-top: 0.5rem;
   width: 100%;
-  background-color: var(--primary-blue);
-  color: white;
-  border: none;
-  border-radius: 6px;
+  justify-content: center;
   padding: 0.75rem;
   font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 0.5rem;
-  transition: background-color 0.2s;
-}
-
-.btn-login:hover {
-  background-color: var(--primary-hover);
 }
 
 .error-message {
-  background-color: rgba(239, 68, 68, 0.15);
-  border: 1px solid var(--error-red);
-  color: #fca5a5;
+  background-color: rgba(240, 82, 82, 0.12);
+  border: 1px solid var(--danger);
+  color: var(--danger);
   padding: 0.75rem;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.85rem;
   margin-bottom: 1.2rem;
   text-align: center;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.login-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.login-footer a:hover {
+  text-decoration: underline;
 }

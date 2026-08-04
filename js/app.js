@@ -1,26 +1,24 @@
 import { getTasks, createTask, updateTask, getTaskById, toggleTaskComplete, deleteTask, getTags } from './tasks.js';
 import { renderTags } from './tags.js';
 import { renderSubtasks } from './subtasks.js';
+import { showConfirm } from './confirm.js';
 
-// ==========================================
 // PROTECCIÓN DE RUTA
-// ==========================================
 if (!localStorage.getItem('token')) {
     window.location.href = 'pages/login.html';
 }
 
-// ==========================================
 // ESTADO DE LA APLICACIÓN
-// ==========================================
 let tasks = [];
 let currentFilter = 'all';
 let searchQuery = '';
 let selectedPriority = null;
 let selectedTag = null;
+let currentView = 'list'; // 'list' | 'calendar'
+let calendarMonth = new Date().getMonth();
+let calendarYear = new Date().getFullYear();
 
-// ==========================================
 // INICIALIZACIÓN
-// ==========================================
 async function initApp() {
     // Cargar tema guardado
     const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -46,7 +44,7 @@ async function initApp() {
     await loadTasks();
     renderApp();
     bindEvents();
-    renderTags(selectedTag, onTagClick);
+    renderTags(selectedTag, onTagClick, onTagsChanged);
 }
 // CARGAR TAREAS
 async function loadTasks() {
@@ -62,7 +60,14 @@ async function loadTasks() {
 function onTagClick(tag) {
     selectedTag = (selectedTag === tag) ? null : tag;
     renderApp();
-    renderTags(selectedTag, onTagClick);
+    renderTags(selectedTag, onTagClick, onTagsChanged);
+}
+
+// Se llama cuando una etiqueta se elimina por completo, para refrescar tareas
+async function onTagsChanged() {
+    selectedTag = null;
+    await loadTasks();
+    renderApp();
 }
 
 // FILTROS Y ESTADÍSTICAS
@@ -103,7 +108,11 @@ function renderApp() {
     updateHeader(filtered.length);
     renderStats(stats);
     renderTabs();
-    renderTaskList(filtered);
+    if (currentView === 'calendar') {
+        renderCalendarView(filtered);
+    } else {
+        renderTaskList(filtered);
+    }
     renderPriorityList();
     renderActivity(tasks.slice(0, 5));
     renderPriorityChart();
@@ -166,19 +175,130 @@ function renderStats(stats) {
 function renderTabs() {
     const bar = document.getElementById('tabsBar');
     if (!bar) return;
-    const filters = [
-        { key: 'all', label: ' Todas' },
-        { key: 'pendientes', label: ' Pendientes' },
-        { key: 'completadas', label: ' Completadas' }
-    ];
-    bar.innerHTML = filters.map(f =>
-        `<button class="tab-btn ${f.key === currentFilter ? 'active' : ''}" data-filter="${f.key}">${f.label}</button>`
-    ).join('');
 
-    bar.querySelectorAll('.tab-btn').forEach(btn => {
+    const views = [
+        { key: 'list', label: 'Lista' },
+        { key: 'calendar', label: 'Calendario' }
+    ];
+    const filters = [
+        { key: 'all', label: 'Todas' },
+        { key: 'pendientes', label: 'Pendientes' },
+        { key: 'completadas', label: 'Completadas' }
+    ];
+
+    bar.innerHTML = `
+        <div class="view-toggle">
+            ${views.map(v => `<button class="tab-btn ${v.key === currentView ? 'active' : ''}" data-view="${v.key}">${v.label}</button>`).join('')}
+        </div>
+        <div class="status-filters">
+            ${filters.map(f => `<button class="tab-btn ${f.key === currentFilter ? 'active' : ''}" data-filter="${f.key}">${f.label}</button>`).join('')}
+        </div>
+    `;
+
+    bar.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentView = btn.dataset.view;
+            renderApp();
+        });
+    });
+
+    bar.querySelectorAll('[data-filter]').forEach(btn => {
         btn.addEventListener('click', () => {
             currentFilter = btn.dataset.filter;
             renderApp();
+        });
+    });
+}
+
+// VISTA DE CALENDARIO
+function renderCalendarView(filteredTasks) {
+    const container = document.getElementById('contentArea');
+    if (!container) return;
+
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const weekDays = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+    const firstDay = new Date(calendarYear, calendarMonth, 1);
+    const lastDay = new Date(calendarYear, calendarMonth + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startWeekday = firstDay.getDay();
+
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === calendarYear && today.getMonth() === calendarMonth;
+
+    // Agrupar tareas por día según su fecha límite real
+    const tasksByDay = {};
+    filteredTasks.forEach(t => {
+        if (!t.dueDate) return;
+        const d = new Date(t.dueDate);
+        if (d.getFullYear() === calendarYear && d.getMonth() === calendarMonth) {
+            const day = d.getDate();
+            if (!tasksByDay[day]) tasksByDay[day] = [];
+            tasksByDay[day].push(t);
+        }
+    });
+
+    const priorityBg = { alta: 'rgba(248,113,113,0.22)', media: 'rgba(251,191,36,0.22)', baja: 'rgba(52,211,153,0.22)' };
+    const priorityText = { alta: '#f87171', media: '#fbbf24', baja: '#34d399' };
+
+    let cellsHtml = '';
+    for (let i = 0; i < startWeekday; i++) {
+        cellsHtml += `<div class="cal-cell" style="opacity:0.35;"></div>`;
+    }
+    for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = isCurrentMonth && today.getDate() === day;
+        const dayTasks = tasksByDay[day] || [];
+        cellsHtml += `
+            <div class="cal-cell ${isToday ? 'today' : ''}">
+                <span class="cal-day ${isToday ? 'today' : ''}">${day}</span>
+                ${dayTasks.map(t => `
+                    <div class="cal-task" data-task-id="${t.id}"
+                         style="background:${priorityBg[t.priority] || 'var(--accent-soft)'}; color:${priorityText[t.priority] || 'var(--accent)'};"
+                         title="${escapeHtml(t.title)}">
+                        ${t.completed ? '✓ ' : ''}${escapeHtml(t.title)}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    container.innerHTML = `
+        <div class="calendar-view">
+            <div class="calendar-header">
+                <button class="cal-nav" id="calPrevBtn">◀</button>
+                <span class="cal-month">${monthNames[calendarMonth]} ${calendarYear}</span>
+                <button class="cal-nav" id="calNextBtn">▶</button>
+                <button class="cal-nav" id="calTodayBtn" style="width:auto; padding:0 12px; font-size:12px;">Hoy</button>
+            </div>
+            <div class="cal-weekdays">
+                ${weekDays.map(d => `<div class="cal-weekday">${d}</div>`).join('')}
+            </div>
+            <div class="cal-grid">
+                ${cellsHtml}
+            </div>
+        </div>
+    `;
+
+    container.querySelector('#calPrevBtn').addEventListener('click', () => {
+        calendarMonth--;
+        if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+        renderApp();
+    });
+    container.querySelector('#calNextBtn').addEventListener('click', () => {
+        calendarMonth++;
+        if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+        renderApp();
+    });
+    container.querySelector('#calTodayBtn').addEventListener('click', () => {
+        const now = new Date();
+        calendarMonth = now.getMonth();
+        calendarYear = now.getFullYear();
+        renderApp();
+    });
+
+    container.querySelectorAll('.cal-task').forEach(el => {
+        el.addEventListener('click', () => {
+            openTaskDetail(el.dataset.taskId);
         });
     });
 }
@@ -407,7 +527,8 @@ function openTaskDetail(taskId) {
     });
 
     overlay.querySelector('#modalDeleteTask').addEventListener('click', async () => {
-        if (confirm('¿Eliminar esta tarea definitivamente?')) {
+        const ok = await showConfirm('¿Eliminar esta tarea definitivamente? Esta acción no se puede deshacer.', { title: 'Eliminar tarea' });
+        if (ok) {
             await deleteTask(taskId);
             await loadTasks();
             overlay.remove();
@@ -521,7 +642,7 @@ function openEditTaskModal(task, onSaved) {
     });
 }
 
-// ===== SUGERENCIAS DE ETIQUETAS EXISTENTES =====
+// SUGERENCIAS DE ETIQUETAS EXISTENTES
 async function renderTagSuggestions(container, inputEl) {
     try {
         const existingTags = await getTags();
@@ -662,6 +783,18 @@ function bindEvents() {
 
     // Nueva tarea
     document.getElementById('newTaskBtn')?.addEventListener('click', openNewTaskModal);
+
+    // Botones de tema
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const theme = btn.dataset.theme;
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
 
     // Búsqueda
     const searchInput = document.getElementById('searchInput');

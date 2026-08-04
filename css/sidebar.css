@@ -1,3 +1,4 @@
+/* ===== SIDEBAR ===== */
 .sidebar {
   width: 210px;
   background: var(--surface);
@@ -60,6 +61,31 @@
   flex-shrink: 0;
 }
 
+/* ===== FILA DE ETIQUETA CON BOTÓN ELIMINAR ===== */
+.sidebar-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.sidebar-tag-row .sidebar-btn { flex: 1; }
+.tag-delete-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 11px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tag-delete-btn:hover {
+  background: var(--danger);
+  color: white;
+}
+
 .sidebar-backdrop {
   display: none;
   position: fixed;
@@ -69,7 +95,7 @@
 }
 .sidebar-backdrop.open { display: block; }
 
-/* USER MENU / FOOTER */
+/* ===== USER MENU / FOOTER ===== */
 .sidebar-footer {
   padding: 16px 18px 0;
   border-top: 1px solid var(--border);
@@ -140,7 +166,7 @@
 .menu-btn:hover { background: var(--accent-soft); }
 .menu-btn.danger { color: var(--danger); }
 
-/* CAMBIO DE TEMA */
+/* ===== THEME SWITCHER (dentro del dropdown) ===== */
 .theme-option {
   display: flex;
   align-items: center;
@@ -168,7 +194,7 @@
 .theme-btn[data-theme="dark"]  { background: #3A3A3A; border: 2px solid #666; }
 .theme-btn[data-theme="light"] { background: #9B7AC7; }
 
-/* RIGHT PANEL */
+/* ===== RIGHT PANEL ===== */
 .right-panel {
   width: 220px;
   background: var(--surface);

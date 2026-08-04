@@ -136,11 +136,22 @@
 .tabs-bar {
   padding: 18px 28px 0;
   display: flex;
+  align-items: center;
   gap: 4px;
   overflow-x: auto;
   scrollbar-width: none;
 }
 .tabs-bar::-webkit-scrollbar { display: none; }
+.view-toggle, .status-filters {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.status-filters {
+  margin-left: 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+}
 .tab-btn {
   padding: 7px 16px;
   border-radius: 7px;

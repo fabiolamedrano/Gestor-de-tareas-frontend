@@ -1,6 +1,8 @@
 import { API_BASE, getHeaders } from './auth.js';
 import { getTaskById } from './tasks.js';
+import { showConfirm } from './confirm.js';
 
+// API Calls subtareas
 async function apiCreateSubtask(taskId, title) {
     const response = await fetch(`${API_BASE}/subtasks/`, {
         method: 'POST',
@@ -39,6 +41,8 @@ async function apiDeleteSubtask(id) {
     return true;
 }
 
+// onChange: callback opcional para refrescar la lista de tareas de fondo
+// (así la barra de progreso de la tarjeta se actualiza aunque el modal siga abierto)
 export async function renderSubtasks(taskId, container, onChange) {
     try {
         const task = await getTaskById(taskId);
@@ -69,7 +73,7 @@ export async function renderSubtasks(taskId, container, onChange) {
         </div>`;
         container.innerHTML = html;
 
-        // ---- Eventos ----
+        // Eventos
         container.querySelectorAll('[data-action="toggle-subtask"]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const item = btn.closest('.subtask-item');
@@ -92,7 +96,8 @@ export async function renderSubtasks(taskId, container, onChange) {
                 const item = btn.closest('.subtask-item');
                 if (!item) return;
                 const subtaskId = item.dataset.subtaskId;
-                if (confirm('¿Eliminar esta subtarea?')) {
+                const ok = await showConfirm('¿Eliminar esta subtarea?', { title: 'Eliminar subtarea' });
+                if (ok) {
                     try {
                         await apiDeleteSubtask(subtaskId);
                         await renderSubtasks(taskId, container, onChange);

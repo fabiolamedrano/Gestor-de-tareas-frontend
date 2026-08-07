@@ -2,6 +2,7 @@ import { getTasks, createTask, updateTask, getTaskById, toggleTaskComplete, dele
 import { renderTags } from './tags.js';
 import { renderSubtasks } from './subtasks.js';
 import { showConfirm } from './confirm.js';
+import { showToast } from './toast.js';
 
 // PROTECCIÓN DE RUTA
 if (!localStorage.getItem('token')) {
@@ -65,7 +66,7 @@ function onTagClick(tag) {
 
 // Se llama cuando una etiqueta se elimina por completo, para refrescar tareas
 async function onTagsChanged() {
-    selectedTag = null;
+    selectedTag = null; // por si la etiqueta activa era la que se borró
     await loadTasks();
     renderApp();
 }
@@ -405,28 +406,34 @@ function renderPriorityList() {
 // ACTIVIDAD
 function renderActivity(recentTasks) {
     const container = document.getElementById('activityList');
-    if (!container) return;
+    const mobileContainer = document.getElementById('activityListMobile');
+
+    let html;
     if (recentTasks.length === 0) {
-        container.innerHTML = '<div class="empty-state">Sin actividad reciente</div>';
-        return;
+        html = '<div class="empty-state">Sin actividad reciente</div>';
+    } else {
+        html = recentTasks.map(task => `
+            <div class="activity-item">
+                <div class="activity-icon" style="background:${task.completed ? 'var(--success)' : 'var(--accent)'}">
+                    ${task.completed ? '✓' : '⏳'}
+                </div>
+                <div>
+                    <div class="activity-text"><span>${escapeHtml(task.title)}</span> ${task.completed ? 'completada' : 'actualizada'}</div>
+                    <div class="activity-time">${timeAgo(task.createdAt)}</div>
+                </div>
+            </div>
+        `).join('');
     }
-    container.innerHTML = recentTasks.map(task => `
-        <div class="activity-item">
-            <div class="activity-icon" style="background:${task.completed ? 'var(--success)' : 'var(--accent)'}">
-                ${task.completed ? '✓' : '⏳'}
-            </div>
-            <div>
-                <div class="activity-text"><span>${escapeHtml(task.title)}</span> ${task.completed ? 'completada' : 'actualizada'}</div>
-                <div class="activity-time">${timeAgo(task.createdAt)}</div>
-            </div>
-        </div>
-    `).join('');
+
+    if (container) container.innerHTML = html;
+    if (mobileContainer) mobileContainer.innerHTML = html;
 }
 
 // GRÁFICO PRIORIDADES
 function renderPriorityChart() {
     const container = document.getElementById('priorityChart');
-    if (!container) return;
+    const mobileContainer = document.getElementById('priorityChartMobile');
+
     const counts = { alta: 0, media: 0, baja: 0 };
     tasks.forEach(t => {
         if (t.priority && counts.hasOwnProperty(t.priority)) counts[t.priority]++;
@@ -435,7 +442,7 @@ function renderPriorityChart() {
     const colors = { alta: '#f87171', media: '#fbbf24', baja: '#34d399' };
     const labels = { alta: 'Alta', media: 'Media', baja: 'Baja' };
 
-    container.innerHTML = `
+    const html = `
         <div class="priority-bar">
             ${Object.keys(counts).map(p => `
                 <div>
@@ -450,6 +457,9 @@ function renderPriorityChart() {
             `).join('')}
         </div>
     `;
+
+    if (container) container.innerHTML = html;
+    if (mobileContainer) mobileContainer.innerHTML = html;
 }
 
 // MODAL DETALLE DE TAREA
@@ -471,11 +481,10 @@ function openTaskDetail(taskId) {
                     <h5>Subtareas</h5>
                     <div class="subtask-list-container"></div>
                 </div>
-                <div style="display:flex; gap:8px; justify-content:flex-end; border-top:1px solid var(--border); padding-top:12px;">
-                    <button class="cancel-btn" data-action="close-modal">Cerrar</button>
+                <div class="modal-actions">
                     <button class="cancel-btn" id="modalEditTask">✎ Editar</button>
                     <button class="btn-primary" id="modalToggleComplete">Marcar completada</button>
-                    <button class="danger" style="background:var(--danger); color:white; padding:9px 14px; border-radius:8px; border:none;" id="modalDeleteTask">Eliminar</button>
+                    <button class="modal-delete-btn" id="modalDeleteTask">Eliminar</button>
                 </div>
             </div>
         </div>
@@ -506,6 +515,27 @@ function openTaskDetail(taskId) {
         const subContainer = overlay.querySelector('.subtask-list-container');
         if (subContainer) {
             renderSubtasks(taskId, subContainer, async () => {
+                // Sincroniza el estado de la tarea según sus subtareas:
+                // todas completas -> tarea completada; alguna pendiente -> tarea pendiente de nuevo
+                const check = await getTaskById(taskId);
+                const total = check.subtasks ? check.subtasks.length : 0;
+                const done = check.subtasks ? check.subtasks.filter(s => s.done).length : 0;
+
+                const shouldBeCompleted = total > 0 && done === total;
+
+                if (total > 0 && shouldBeCompleted !== check.completed) {
+                    await updateTask({
+                        id: taskId,
+                        title: check.title,
+                        description: check.description,
+                        priority: check.priority,
+                        dueDate: check.dueDate,
+                        completed: shouldBeCompleted,
+                        tagNames: (check.tags || []).map(t => typeof t === 'string' ? t : (t.name || t.TagName))
+                    });
+                    await loadAndRenderDetail();
+                }
+
                 await loadTasks();
                 renderApp();
             });
@@ -614,7 +644,7 @@ function openEditTaskModal(task, onSaved) {
     overlay.querySelector('#confirmEditTask').addEventListener('click', async () => {
         const title = overlay.querySelector('#editTaskTitle').value.trim();
         if (!title) {
-            alert('El título es obligatorio');
+            showToast('El título es obligatorio');
             return;
         }
         const description = overlay.querySelector('#editTaskDesc').value.trim();
@@ -634,10 +664,12 @@ function openEditTaskModal(task, onSaved) {
                 tagNames
             });
             overlay.remove();
+            showToast('Tarea actualizada', 'success');
+            renderTags(selectedTag, onTagClick, onTagsChanged);
             if (onSaved) await onSaved();
         } catch (error) {
             console.error('Error al editar tarea:', error);
-            alert('Error al guardar los cambios');
+            showToast('Error al guardar los cambios');
         }
     });
 }
@@ -737,7 +769,7 @@ function openNewTaskModal() {
     overlay.querySelector('#confirmNewTask').addEventListener('click', async () => {
         const title = overlay.querySelector('#newTaskTitle').value.trim();
         if (!title) {
-            alert('El título es obligatorio');
+            showToast('El título es obligatorio');
             return;
         }
         const description = overlay.querySelector('#newTaskDesc').value.trim();
@@ -759,9 +791,11 @@ function openNewTaskModal() {
             await loadTasks();
             overlay.remove();
             renderApp();
+            renderTags(selectedTag, onTagClick, onTagsChanged);
+            showToast('Tarea creada', 'success');
         } catch (error) {
             console.error('Error al crear tarea:', error);
-            alert('Error al crear la tarea');
+            showToast('Error al crear la tarea');
         }
     });
 }

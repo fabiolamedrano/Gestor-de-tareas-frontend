@@ -1,5 +1,6 @@
-import { API_BASE, getHeaders } from './auth.js';
+import { API_BASE, getHeaders, handleUnauthorized } from './auth.js';
 
+// Convierte el "detail" de un error de FastAPI en un texto legible,
 function formatApiError(error, fallback) {
     if (!error || !error.detail) return fallback;
     if (typeof error.detail === 'string') return error.detail;
@@ -7,6 +8,15 @@ function formatApiError(error, fallback) {
         return error.detail.map(e => `${e.loc?.[e.loc.length - 1] || 'campo'}: ${e.msg}`).join(' | ');
     }
     return fallback;
+}
+
+// Si la respuesta es 401 (token inválido/expirado), redirige al login
+function checkUnauthorized(response) {
+    if (response.status === 401) {
+        handleUnauthorized();
+        return new Promise(() => {});
+    }
+    return null;
 }
 
 // Convertir tarea del backend al formato de la UI
@@ -55,6 +65,8 @@ function toBackend(task, includeId = false) {
 export async function getTasks() {
     try {
         const response = await fetch(`${API_BASE}/tasks/`, { headers: getHeaders() });
+        const unauthorized = checkUnauthorized(response);
+        if (unauthorized) return unauthorized;
         if (!response.ok) {
             const error = await response.json();
             throw new Error(formatApiError(error, 'Error al obtener tareas'));
@@ -69,6 +81,8 @@ export async function getTasks() {
 
 export async function getTaskById(id) {
     const response = await fetch(`${API_BASE}/tasks/${id}`, { headers: getHeaders() });
+    const unauthorized = checkUnauthorized(response);
+    if (unauthorized) return unauthorized;
     if (!response.ok) {
         const error = await response.json();
         throw new Error(formatApiError(error, 'Error al obtener tarea'));
@@ -84,6 +98,8 @@ export async function createTask(taskData) {
         headers: getHeaders(),
         body: JSON.stringify(body)
     });
+    const unauthorized = checkUnauthorized(response);
+    if (unauthorized) return unauthorized;
     if (!response.ok) {
         const error = await response.json();
         throw new Error(formatApiError(error, 'Error al crear tarea'));
@@ -99,6 +115,8 @@ export async function updateTask(taskData) {
         headers: getHeaders(),
         body: JSON.stringify(body)
     });
+    const unauthorized = checkUnauthorized(response);
+    if (unauthorized) return unauthorized;
     if (!response.ok) {
         const error = await response.json();
         throw new Error(formatApiError(error, 'Error al actualizar tarea'));
@@ -112,6 +130,8 @@ export async function deleteTask(id) {
         method: 'DELETE',
         headers: getHeaders()
     });
+    const unauthorized = checkUnauthorized(response);
+    if (unauthorized) return unauthorized;
     if (!response.ok) {
         const error = await response.json();
         throw new Error(formatApiError(error, 'Error al eliminar tarea'));
@@ -130,6 +150,8 @@ export async function deleteTag(id) {
         method: 'DELETE',
         headers: getHeaders()
     });
+    const unauthorized = checkUnauthorized(response);
+    if (unauthorized) return unauthorized;
     if (!response.ok) {
         const error = await response.json();
         throw new Error(formatApiError(error, 'Error al eliminar etiqueta'));
@@ -142,6 +164,8 @@ export async function getTags() {
     const userId = localStorage.getItem('user_id');
     try {
         const response = await fetch(`${API_BASE}/tags/user/${userId}`, { headers: getHeaders() });
+        const unauthorized = checkUnauthorized(response);
+        if (unauthorized) return unauthorized;
         if (response.ok) {
             const data = await response.json();
             return data;

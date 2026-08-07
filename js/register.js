@@ -1,79 +1,80 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const registerForm = document.getElementById('registerForm');
-  const errorMessage = document.getElementById('errorMessage');
-  const btnRegister = document.getElementById('btnRegister');
+    const registerForm = document.getElementById('registerForm');
+    const errorBox = document.getElementById('registerError'); // Cambiado al ID del segundo código
+    const btnRegister = document.getElementById('btnRegister');
 
-  // Ajusta la URL de acuerdo a tu servidor Backend (FastAPI, Node.js, Express, etc.)
-  const API_REGISTER_URL = 'http://localhost:8000/api/auth/register';
+    // Mantenemos la URL que SÍ funciona (del segundo código)
+    const API_BASE = 'http://localhost:8000';
 
-  registerForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // Limpiar mensajes de error previos
-    hideError();
-
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-
-    // Validaciones del cliente
-    if (!name || !email || !password || !confirmPassword) {
-      showError('Por favor, completa todos los campos.');
-      return;
+    function showError(message) {
+        if (errorBox) {
+            errorBox.classList.remove('success');
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+        } else {
+            alert(message);
+        }
     }
 
-    if (password !== confirmPassword) {
-      showError('Las contraseñas no coinciden.');
-      return;
+    function hideError() {
+        if (errorBox) {
+            errorBox.textContent = '';
+            errorBox.style.display = 'none';
+        }
     }
 
-    if (password.length < 6) {
-      showError('La contraseña debe tener al menos 6 caracteres.');
-      return;
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!email || !password || !confirmPassword) {
+                showError('Completa todos los campos.');
+                return;
+            }
+            if (password.length < 8) {
+                showError('La contraseña debe tener al menos 8 caracteres.');
+                return;
+            }
+            if (password !== confirmPassword) {
+                showError('Las contraseñas no coinciden.');
+                return;
+            }
+
+            try {
+                if (btnRegister) {
+                    btnRegister.disabled = true;
+                    btnRegister.textContent = 'Registrando...';
+                }
+
+                const response = await fetch(`${API_BASE}/users/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    showError(error.detail || 'No se pudo crear la cuenta.');
+                    return;
+                }
+
+                localStorage.setItem('account_created', '1');
+                window.location.href = 'login.html';
+
+            } catch (error) {
+                console.error('Error al registrar:', error);
+                showError('No se pudo conectar con el servidor. ¿El backend está corriendo?');
+            } finally {
+                if (btnRegister) {
+                    btnRegister.disabled = false;
+                    btnRegister.textContent = 'Registrarse';
+                }
+            }
+        });
     }
-
-    try {
-      btnRegister.disabled = true;
-      btnRegister.textContent = 'Registrando...';
-
-      const response = await fetch(API_REGISTER_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: name,
-          email: email,
-          password: password
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || data.message || 'Error al registrar usuario.');
-      }
-
-      // Redireccionar al login tras registro exitoso
-      alert('¡Cuenta creada con éxito! Por favor inicia sesión.');
-      window.location.href = 'login.html';
-
-    } catch (error) {
-      showError(error.message);
-    } finally {
-      btnRegister.disabled = false;
-      btnRegister.textContent = 'Registrarse';
-    }
-  });
-
-  function showError(msg) {
-    errorMessage.textContent = msg;
-    errorMessage.style.display = 'block';
-  }
-
-  function hideError() {
-    errorMessage.textContent = '';
-    errorMessage.style.display = 'none';
-  }
 });

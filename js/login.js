@@ -4,6 +4,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const errorBox = document.getElementById('loginError');
 
+    function showError(message) {
+        if (errorBox) {
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+        } else {
+            alert(message);
+        }
+    }
+
+    // Si llegamos aquí porque el token expiró, mostrar el aviso
+    if (localStorage.getItem('session_expired')) {
+        localStorage.removeItem('session_expired');
+        showError('Tu sesión expiró. Inicia sesión de nuevo para continuar.');
+    }
+
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -42,14 +57,5 @@ document.addEventListener('DOMContentLoaded', () => {
                 showError('No se pudo conectar con el servidor. ¿El backend está corriendo?');
             }
         });
-    }
-
-    function showError(message) {
-        if (errorBox) {
-            errorBox.textContent = message;
-            errorBox.style.display = 'block';
-        } else {
-            alert(message);
-        }
     }
 });

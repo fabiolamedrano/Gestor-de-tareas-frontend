@@ -1,14 +1,24 @@
-import { API_BASE, getHeaders } from './auth.js';
+import { API_BASE, getHeaders, handleUnauthorized } from './auth.js';
 import { getTaskById } from './tasks.js';
 import { showConfirm } from './confirm.js';
 
-// API Calls subtareas
+function checkUnauthorized(response) {
+    if (response.status === 401) {
+        handleUnauthorized();
+        return new Promise(() => {});
+    }
+    return null;
+}
+
+// API Calls de subtareas
 async function apiCreateSubtask(taskId, title) {
     const response = await fetch(`${API_BASE}/subtasks/`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ task_id: Number(taskId), title })
     });
+    const unauthorized = checkUnauthorized(response);
+    if (unauthorized) return unauthorized;
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Error al crear subtarea');
@@ -22,6 +32,8 @@ async function apiUpdateSubtask(id, title, isCompleted) {
         headers: getHeaders(),
         body: JSON.stringify({ id: Number(id), title, is_completed: isCompleted })
     });
+    const unauthorized = checkUnauthorized(response);
+    if (unauthorized) return unauthorized;
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Error al actualizar subtarea');
@@ -34,6 +46,8 @@ async function apiDeleteSubtask(id) {
         method: 'DELETE',
         headers: getHeaders()
     });
+    const unauthorized = checkUnauthorized(response);
+    if (unauthorized) return unauthorized;
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'Error al eliminar subtarea');
@@ -73,7 +87,7 @@ export async function renderSubtasks(taskId, container, onChange) {
         </div>`;
         container.innerHTML = html;
 
-        // Eventos
+        // ---- Eventos ----
         container.querySelectorAll('[data-action="toggle-subtask"]').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const item = btn.closest('.subtask-item');

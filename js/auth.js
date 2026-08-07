@@ -9,7 +9,7 @@ export function getHeaders() {
 }
 
 export function isAuthenticated() {
-    return true; 
+    return true;
 }
 
 export function getCurrentUser() {
@@ -18,4 +18,13 @@ export function getCurrentUser() {
 
 export function logout() {
     localStorage.removeItem('token');
+}
+
+// Se llama cuando el backend responde 401 (token inválido o expirado).
+export function handleUnauthorized() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('user_email');
+    localStorage.setItem('session_expired', '1');
+    window.location.href = 'pages/login.html';
 }
